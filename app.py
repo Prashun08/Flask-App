@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_restful import Api, Resource
 
 app = Flask(__name__)
@@ -8,11 +8,11 @@ api = Api(app)
 def checkPostData(postData, functionname):
     if (functionname in ["add", "subtract", "multiply"]):
         if "x" not in postData:
-            return "X is Missing",301
+            return "X is Missing", 301
         elif "y" not in postData:
-            return "Y is Missing",302
+            return "Y is Missing", 302
         else:
-            return "Numbers " + functionname+"ed" + " Successfully! ",200
+            return "Numbers " + functionname+"ed" + " Successfully! ", 200
     else:
         if "x" not in postData:
             return "X is Missing",301
@@ -21,7 +21,7 @@ def checkPostData(postData, functionname):
         elif postData["y"] == 0:
             return "Y is Zero, Hence cannot be divided by zero!", 303
         else:
-            return "Numbers divided Successfully!",200
+            return "Numbers divided Successfully!", 200
 
 
 class Add(Resource):
@@ -34,17 +34,17 @@ class Add(Resource):
                 "Message" : message,
                 "Status Code" : statuscode
             }
-            return jsonify(retJson)
+            return make_response(jsonify(retJson), statuscode)
         x = postData["x"]
         y = postData["y"]
         x, y = int(x), int(y)
         ret = x + y
-        retMap = {
+        retJson = {
             "Message" : message,
             "Value" : ret,
             "Status Code" : statuscode
         }
-        return jsonify(retMap)
+        return make_response(jsonify(retJson), statuscode)
 
 
 class Subtract(Resource):
@@ -57,17 +57,17 @@ class Subtract(Resource):
                 "Message" : message,
                 "Status Code" : statuscode
             }
-            return jsonify(retJson)
+            return make_response(jsonify(retJson), statuscode)
         x = postData["x"]
         y = postData["y"]
         x, y = int(x), int(y)
         ret = x - y
-        retMap = {
+        retJson = {
             "Message" : message,
             "Value" : ret,
             "Status Code" : statuscode
         }
-        return jsonify(retMap)
+        return make_response(jsonify(retJson), statuscode)
 
 class Multiply(Resource):
     def post(self):
@@ -79,17 +79,17 @@ class Multiply(Resource):
                 "Message" : message,
                 "Status Code" : statuscode
             }
-            return jsonify(retJson)
+            return make_response(jsonify(retJson), statuscode)
         x = postData["x"]
         y = postData["y"]
         x, y = int(x), int(y)
         ret = x * y
-        retMap = {
+        retJson = {
             "Message" : message,
             "Value" : ret,
             "Status Code" : statuscode
         }
-        return jsonify(retMap)
+        return make_response(jsonify(retJson), statuscode)
 
 class Divide(Resource):
     def post(self):
@@ -101,17 +101,17 @@ class Divide(Resource):
                 "Message" : message,
                 "Status Code" : statuscode
             }
-            return jsonify(retJson)
+            return make_response(jsonify(retJson), statuscode)
         x = postData["x"]
         y = postData["y"]
         x, y = int(x), int(y)
         ret = x / y
-        retMap = {
+        retJson = {
             "Message" : message,
             "Value" : ret,
             "Status Code" : statuscode
         }
-        return jsonify(retMap)
+        return make_response(jsonify(retJson), statuscode)
 
 
 api.add_resource(Add,"/add")
