@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+    
+    options {
+        skipStagesAfterUnstable()
+    }
+
+    stages {
+        stage('Checkout'){
+            steps{
+                //Checkout GitHub Repository
+                git branch: 'main', url: 'https://github.com/Prashun08/Flask-App.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                // Install dependencies (if any)
+                withPythonEnv('python3') {
+                    sh 'pip3 install -r requirements.txt'
+                    sh 'python -m py_compile app.py' 
+                    stash(name: 'compiled-results', includes: '*.py*') 
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                // Run pytest and generate XML report
+                withPythonEnv('python3') {
+                    sh 'py.test --junit-xml test-reports/results.xml Test/test_app.py'
+                }
+            }
+            post {
+                always {
+                    junit 'test-reports/results.xml'
+                }
+            }
+        }
+        stage('Snyk Vulnerability Checks') {
+            steps {
+                echo 'Testing...'
+                withPythonEnv('python3') {
+                        snykSecurity(
+                        snykInstallation: 'Snyk',
+                        snykTokenId: 'snyk-api',
+                        failOnIssues: false ,
+                        //additionalArguments: '--pakage-manager=pip3 --File=app.py'
+                    )
+                }
+            }
+        }
+        stage('Deliver') { 
+            steps {
+                withPythonEnv('python3') {
+                    sh "pyinstaller --onefile app.py" 
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts 'dist/app' 
+                }
+            }
+        }
+        stage('Slack Notification') {
+            steps{
+                slackSend(channel: "#python-api-jenkins", message: 'Jenkins pipeline runs succesfully. Please check snyk dashboard for any issue')
+            }
+        }
+    }
+}
