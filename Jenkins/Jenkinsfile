@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout'){
             steps{
-                //Checkout GitHub Repository
+                // Checkout GitHub Repository
                 git branch: 'main', url: 'https://github.com/Prashun08/Flask-App.git'
             }
         }
@@ -39,11 +39,11 @@ pipeline {
             steps {
                 echo 'Testing...'
                 withPythonEnv('python3') {
-                        snykSecurity(
+                    snykSecurity(
                         snykInstallation: 'Snyk',
                         snykTokenId: 'snyk-api',
-                        failOnIssues: false ,
-                        //additionalArguments: '--pakage-manager=pip3 --File=app.py'
+                        failOnIssues: false,
+                        // additionalArguments: '--package-manager=pip3 --file=app.py'
                     )
                 }
             }
@@ -54,15 +54,31 @@ pipeline {
                     sh "pyinstaller --onefile app.py" 
                 }
             }
-            post {
-                success {
-                    archiveArtifacts 'dist/app' 
+        }
+        stage('Environment Prompt') {
+            steps {
+                script {
+                    env.DEPLOY_ENV = input message: 'Select the deployment environment:', parameters: [choice(name: 'Environment', choices: ['PROD', 'NON-PROD'], description: 'Deployment Environment')]
+                }
+            }
+        }
+        stage('Archive or Deliver') {
+            steps {
+                script {
+                    if (env.DEPLOY_ENV == 'PROD') {
+                        sh "mv dist/app dist/app_${env.BUILD_ID}"
+                        archiveArtifacts artifacts: "dist/app_${env.BUILD_ID}", allowEmptyArchive: true, fingerprint: true
+                        currentBuild.displayName = "#${env.BUILD_ID} - ${env.DEPLOY_ENV}"
+                    } else {
+                        echo 'Non-Prod deployment, no renaming needed'
+                        archiveArtifacts artifacts: 'dist/app', allowEmptyArchive: true, fingerprint: true
+                    }
                 }
             }
         }
         stage('Slack Notification') {
             steps{
-                slackSend(channel: "#python-api-jenkins", message: 'Jenkins pipeline runs succesfully. Please check snyk dashboard for any issue')
+                slackSend(channel: "#python-api-jenkins", message: "Jenkins pipeline ran successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
             }
         }
     }
