@@ -4,3 +4,4 @@ flask_restful
 pytest
 pytest-html
 pyinstaller
+pymongo
