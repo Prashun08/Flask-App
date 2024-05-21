@@ -6,8 +6,8 @@ pipeline {
     }
 
     stages {
-        stage('Checkout'){
-            steps{
+        stage('Checkout') {
+            steps {
                 // Checkout GitHub Repository
                 git branch: 'main', url: 'https://github.com/Prashun08/Flask-App.git'
             }
@@ -76,8 +76,59 @@ pipeline {
                 }
             }
         }
+        stage('Upload to S3') {
+            steps {
+                script {
+                    if (env.DEPLOY_ENV == 'PROD') {
+                        s3Upload consoleLogLevel: 'INFO', 
+                                 dontSetBuildResultOnFailure: false, 
+                                 dontWaitForConcurrentBuildCompletion: false, 
+                                 entries: [[
+                                     bucket: 'flaskapp-prashun', 
+                                     excludedFile: '', 
+                                     flatten: false, 
+                                     gzipFiles: false, 
+                                     keepForever: false, 
+                                     managedArtifacts: true, 
+                                     noUploadOnFailure: false, 
+                                     selectedRegion: 'us-east-1', 
+                                     showDirectlyInBrowser: false, 
+                                     sourceFile: 'dist/app_${BUILD_ID}', 
+                                     storageClass: 'STANDARD', 
+                                     uploadFromSlave: false, 
+                                     useServerSideEncryption: false
+                                    ]], 
+                                 pluginFailureResultConstraint: 'FAILURE', 
+                                 profileName: 'aws-credentials', 
+                                 userMetadata: []
+                    } else {
+                        s3Upload consoleLogLevel: 'INFO', 
+                                 dontSetBuildResultOnFailure: false, 
+                                 dontWaitForConcurrentBuildCompletion: false, 
+                                 entries: [[
+                                     bucket: 'flaskapp-prashun', 
+                                     excludedFile: '', 
+                                     flatten: false, 
+                                     gzipFiles: false, 
+                                     keepForever: false, 
+                                     managedArtifacts: true, 
+                                     noUploadOnFailure: false, 
+                                     selectedRegion: 'us-east-1', 
+                                     showDirectlyInBrowser: false, 
+                                     sourceFile: 'dist/app', 
+                                     storageClass: 'STANDARD', 
+                                     uploadFromSlave: false, 
+                                     useServerSideEncryption: false
+                                    ]], 
+                                 pluginFailureResultConstraint: 'FAILURE', 
+                                 profileName: 'aws-credentials', 
+                                 userMetadata: []
+                    }
+                }
+            }
+        }
         stage('Slack Notification') {
-            steps{
+            steps {
                 slackSend(channel: "#python-api-jenkins", message: "Jenkins pipeline ran successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
             }
         }
