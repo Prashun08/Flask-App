@@ -1,12 +1,12 @@
-FROM jenkins/jenkins:lts-jdk17
+FROM python:3.8-slim
 
-USER root
+WORKDIR /app
 
-# Install Python and pip
-RUN apt update && \
-    apt install -y python3 && \
-    apt install -y python3-pip && \
-    pip3 install --upgrade pip
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-USER jenkins
-EXPOSE 8080
+COPY . .
+
+ENV FLASK_APP=app.py
+
+CMD ["flask", "run", "--host=0.0.0.0"]
