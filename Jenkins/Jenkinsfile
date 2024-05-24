@@ -132,19 +132,21 @@ pipeline {
                 slackSend(channel: "#python-api-jenkins", message: "Code builded & tested successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
             }
         }
+        stage('Prune Docker data') {
+            steps {
+                sh 'docker system prune -a --volumes -f'
+            }
+        }
         stage('Deploying to Containers') {
             steps {
-                sh 'docker-compose up -d'
+                sh 'docker compose up -d --no-color --wait'
+                sh 'docker compose ps'
             }
         }
         stage('Test the Containers') {
             steps {
+                sh 'curl http://localhost:5000'
                 sleep time: 3, unit: 'MINUTES'
-            }
-        }
-        stage('Stopping the containers') {
-            steps {
-                sh 'docker-compose down'
             }
         }
         stage('Slack Notification post Deploy') {
@@ -153,5 +155,11 @@ pipeline {
             }
         }
         
+    }
+    post{
+        always{
+            sh 'docker compose down'
+            sh 'docker compose ps'
+        }
     }
 }
