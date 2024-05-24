@@ -6,16 +6,24 @@ from pymongo import MongoClient
 app = Flask(__name__)
 api = Api(app)
 
-client = MongoClient("mongodb://db:27017")
-db = client.aNewDB
-UserNum = db["UserNum"]
+client = None
+db = None
+UserNum = None
 
-UserNum.insert_one({
-    'num_of_users':0
-})
+def get_db():
+    global client, db, UserNum
+    if client is None:
+        client = MongoClient("mongodb://db:27017")
+        db = client.aNewDB
+        UserNum = db["UserNum"]
+        UserNum.insert_one({
+            'num_of_users':0
+        })
+    return db, UserNum
 
 class Visit(Resource):
     def get(self):
+        db, UserNum = get_db()
         prev_num = UserNum.find({})[0]['num_of_users']
         new_num = prev_num + 1
         UserNum.update_one({}, {"$set":{"num_of_users":new_num}})
@@ -43,6 +51,7 @@ def checkPostData(postData, functionname):
 
 class Add(Resource):
     def post(self):
+        db, UserNum = get_db()
         postData = request.get_json()
 
         message, statuscode = checkPostData(postData,"add")
@@ -66,6 +75,7 @@ class Add(Resource):
 
 class Subtract(Resource):
     def post(self):
+        db, UserNum = get_db()
         postData = request.get_json()
 
         message, statuscode = checkPostData(postData,"subtract")
@@ -88,6 +98,7 @@ class Subtract(Resource):
 
 class Multiply(Resource):
     def post(self):
+        db, UserNum = get_db()
         postData = request.get_json()
 
         message, statuscode = checkPostData(postData,"multiply")
@@ -110,6 +121,7 @@ class Multiply(Resource):
 
 class Divide(Resource):
     def post(self):
+        db, UserNum = get_db()
         postData = request.get_json()
 
         message, statuscode = checkPostData(postData,"divide")

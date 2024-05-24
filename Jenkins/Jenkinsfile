@@ -127,10 +127,31 @@ pipeline {
                 }
             }
         }
-        stage('Slack Notification') {
+        stage('Slack Notification post Build') {
             steps {
-                slackSend(channel: "#python-api-jenkins", message: "Jenkins pipeline ran successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
+                slackSend(channel: "#python-api-jenkins", message: "Code builded & tested successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
             }
         }
+        stage('Deploying to Containers') {
+            steps {
+                sh 'docker-compose up -d'
+            }
+        }
+        stage('Test the Containers') {
+            steps {
+                sleep time: 3, unit: 'MINUTES'
+            }
+        }
+        stage('Stopping the containers') {
+            steps {
+                sh 'docker-compose down'
+            }
+        }
+        stage('Slack Notification post Deploy') {
+            steps {
+                slackSend(channel: "#python-api-jenkins", message: "Code deployed and ran successfully in ${env.DEPLOY_ENV}. Please check Snyk dashboard for any issues.")
+            }
+        }
+        
     }
 }

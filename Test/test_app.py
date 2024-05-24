@@ -1,11 +1,15 @@
 import pytest
+from unittest.mock import patch
 from app import app
+import mongomock
 
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+    mock_db = mongomock.MongoClient().db
+    with patch('app.get_db', return_value=(mock_db, mock_db.collection)):
+        with app.test_client() as client:
+            yield client
 
 def test_add(client):
     response = client.post('/add', json={"x": 10, "y": 5})
